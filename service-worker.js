@@ -8,8 +8,6 @@ let CACHE_NAME = null; // resolved during install from version.json
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./css/styles.css",
-  "./js/app.js",
   "./manifest.json",
   "./version.json"
 ];
