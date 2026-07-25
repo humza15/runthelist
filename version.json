@@ -1,0 +1,7 @@
+{
+  "version": "0.1.0",
+  "releaseDate": "2026-07-24",
+  "notes": [
+    "First build: rounds list, dispo tab, notes and dictation, encounter timer, unit setup"
+  ]
+}
