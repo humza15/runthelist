@@ -1,7 +1,16 @@
 {
-  "version": "0.1.0",
-  "releaseDate": "2026-07-24",
+  "version": "0.2.0",
+  "releaseDate": "2026-07-25",
   "notes": [
-    "First build: rounds list, dispo tab, notes and dictation, encounter timer, unit setup"
+    "Split to-dos/reminders from dispo planning - dispo now lives only in the Dispo tab",
+    "Removed swipe gestures; rounded/note are now big labeled buttons",
+    "Cards stay in a fixed order; tap Sort to switch between room order and progress order",
+    "Whole card taps open/close; expanded view shows to-dos, reminders, and notes together",
+    "Big start/stop timer visible without opening the card",
+    "New Reminders tab: patient cards showing just their to-do/reminder list",
+    "Dispo tab: EDD is now a dropdown that resolves to a real date and updates itself day to day",
+    "Reaching EDD = Today reveals a MOIST discharge checklist on that patient",
+    "Added PT/OT disposition recommendation + date recommended",
+    "Added a pending/awaiting-something flag with a reason field, shown on the Dispo tab"
   ]
 }
