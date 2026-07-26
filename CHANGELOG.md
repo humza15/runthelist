@@ -2,6 +2,16 @@
 
 All notable changes to Rounding List are documented here. Dates reflect when a version was deployed.
 
+## 0.2.1 — 2026-07-25
+### What's new
+- Animated status icon on the Dispo tab, to the left of each patient: sleeping (not ready), jumping (EDD is today), waiting with bags (pending) — shows a dash until an EDD is set
+- Rounds progress now shows two color-coded bars: green for rounded, blue for notes completed
+- MOIST discharge checklist labels shortened to Meds / Order / Instr. / Summary / Time
+- Dispo tab now defaults to room-number order, with a calendar icon in the header to sort by EDD instead
+- Share sign-out summary is now a small text link at the bottom instead of a large button
+- Simplified the to-do/reminder prompt text
+- Rounds header now shows your selected unit name and day instead of a bed count
+
 ## 0.2.0 — 2026-07-25
 ### What's new
 - To-dos and dispo planning are now fully separate: patient to-dos/reminders (e.g. "Obtain CBC at 2PM") live on the Rounds card; dispo planning lives only in the Dispo tab

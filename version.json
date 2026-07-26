@@ -1,16 +1,13 @@
 {
-  "version": "0.2.0",
+  "version": "0.2.1",
   "releaseDate": "2026-07-25",
   "notes": [
-    "Split to-dos/reminders from dispo planning - dispo now lives only in the Dispo tab",
-    "Removed swipe gestures; rounded/note are now big labeled buttons",
-    "Cards stay in a fixed order; tap Sort to switch between room order and progress order",
-    "Whole card taps open/close; expanded view shows to-dos, reminders, and notes together",
-    "Big start/stop timer visible without opening the card",
-    "New Reminders tab: patient cards showing just their to-do/reminder list",
-    "Dispo tab: EDD is now a dropdown that resolves to a real date and updates itself day to day",
-    "Reaching EDD = Today reveals a MOIST discharge checklist on that patient",
-    "Added PT/OT disposition recommendation + date recommended",
-    "Added a pending/awaiting-something flag with a reason field, shown on the Dispo tab"
+    "Added an animated status icon on the Dispo tab: sleeping (not ready), jumping (EDD is today), waiting with bags (pending) - shows a dash until an EDD is set",
+    "Rounds progress now shows two color-coded bars: green for rounded, blue for notes completed",
+    "MOIST discharge checklist labels shortened to Meds / Order / Instr. / Summary / Time",
+    "Dispo tab now defaults to room-number order, with a calendar icon in the header to sort by EDD instead",
+    "Share sign-out summary is now a small text link at the bottom instead of a large button",
+    "Simplified the to-do/reminder prompt text",
+    "Rounds header now shows your selected unit name and day instead of a bed count"
   ]
 }
