@@ -178,7 +178,7 @@ button { font-family: inherit; cursor: pointer; }
 .todo-add { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--accent); background: none; border: none; padding: 6px 0; font-weight: 600; }
 .todo-add svg { width: 15px; height: 15px; }
 
-.notes-block textarea { width: 100%; min-height: 70px; }
+.notes-block textarea { width: 100%; min-height: 70px; resize: none; overflow: hidden; }
 .notes-actions { display: flex; gap: 8px; margin-top: 8px; }
 
 /* Tab bar */
@@ -308,6 +308,30 @@ textarea { resize: vertical; min-height: 90px; }
   display: inline-flex; align-items: center; gap: 5px; padding: 6px;
 }
 .share-link svg { width: 14px; height: 14px; }
+
+/* Priority picker (add to-do modal) */
+.priority-picker { display: flex; gap: 8px; margin-top: 4px; }
+.priority-opt {
+  flex: 1; padding: 10px 4px; border-radius: 10px; border: 1.5px solid var(--border);
+  background: var(--surface-2); font-size: 13px; font-weight: 700; text-align: center; color: var(--text-secondary);
+}
+.priority-opt.selected.high { background: var(--danger-bg); border-color: var(--danger); color: var(--danger-text); }
+.priority-opt.selected.medium { background: var(--warn-bg); border-color: var(--warn); color: var(--warn-text); }
+.priority-opt.selected.low { background: var(--success-bg); border-color: var(--success); color: var(--success-text); }
+
+.todo-priority-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.todo-priority-dot.high { background: var(--danger); }
+.todo-priority-dot.medium { background: var(--warn); }
+.todo-priority-dot.low { background: var(--success); }
+
+/* Reminders tab summary */
+.reminders-summary { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px; margin: 0 16px 12px; }
+.summary-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+.priority-summary-row { display: flex; gap: 8px; margin-top: 10px; }
+.priority-chip { flex: 1; text-align: center; font-size: 12px; font-weight: 700; padding: 6px 4px; border-radius: 10px; }
+.priority-chip.high { background: var(--danger-bg); color: var(--danger-text); }
+.priority-chip.medium { background: var(--warn-bg); color: var(--warn-text); }
+.priority-chip.low { background: var(--success-bg); color: var(--success-text); }
 
 /* Reminders tab */
 .reminder-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
@@ -549,6 +573,7 @@ textarea { resize: vertical; min-height: 90px; }
       app.innerHTML = renderHeader() + renderRemindersTab() + versionFooter() + renderTabbar();
     } else {
       app.innerHTML = renderHeader() + renderProgress() + renderRoundsList() + versionFooter() + renderTabbar();
+      document.querySelectorAll('textarea[data-role="notes-textarea"]').forEach(autoResizeTextarea);
     }
   }
 
@@ -598,7 +623,7 @@ textarea { resize: vertical; min-height: 90px; }
 
   /* ---------------------------- Header ---------------------------- */
   function renderHeader() {
-    const titles = { rounds: "Rounding Week", dispo: "Dispo overview", reminders: "Reminders" };
+    const titles = { rounds: "Rounding Week", dispo: "Disposition Overview & Discharge Planning", reminders: "Reminders" };
     let sub;
     if (state.ui.tab === "rounds") sub = `${escapeHtml(state.week.unitName || "Custom list")} &middot; Day ${state.week.dayIndex}`;
     else sub = `${state.patients.length} beds`;
@@ -609,8 +634,8 @@ textarea { resize: vertical; min-height: 90px; }
 
     return `
       <div class="header">
-        <div>
-          <div class="header-title">${titles[state.ui.tab]}</div>
+        <div style="flex:1; min-width:0;">
+          <div class="header-title" style="${state.ui.tab === "dispo" ? "font-size:15px; line-height:1.3;" : ""}">${titles[state.ui.tab]}</div>
           <div class="header-sub">${sub}</div>
         </div>
         <div class="header-actions">
@@ -709,9 +734,8 @@ textarea { resize: vertical; min-height: 90px; }
           <div class="expand-section notes-block">
             <div class="expand-label">Notes</div>
             <textarea data-role="notes-textarea" data-pid="${p.id}" placeholder="e.g. patient complained of chest pain overnight...">${escapeHtml(p.notesText)}</textarea>
-            <div class="notes-actions">
-              <button class="btn-secondary dictate-btn" data-action="dictate" data-pid="${p.id}">${icon("mic")} Dictate</button>
-              <button class="icon-only-btn" data-action="remove-patient" data-pid="${p.id}" aria-label="Remove bed" style="flex:0 0 auto; padding:0 10px;">${icon("trash")}</button>
+            <div class="notes-actions" style="justify-content:flex-end;">
+              <button class="icon-only-btn" data-action="open-bed-options" data-pid="${p.id}" aria-label="Bed options" style="flex:0 0 auto; padding:0 10px;">${icon("trash")}</button>
             </div>
           </div>
         </div>
@@ -723,6 +747,7 @@ textarea { resize: vertical; min-height: 90px; }
     if (!p.todos.length) return `<div style="font-size:13px; color:var(--text-muted);">Nothing yet</div>`;
     return p.todos.map(t => `
       <div class="todo-item ${t.checked ? "checked" : ""}">
+        ${t.priority ? `<span class="todo-priority-dot ${t.priority}"></span>` : ""}
         <input type="checkbox" data-action="toggle-todo" data-pid="${p.id}" data-tid="${t.id}" ${t.checked ? "checked" : ""}/>
         <span data-action="edit-todo" data-pid="${p.id}" data-tid="${t.id}">${escapeHtml(t.text)}</span>
       </div>`).join("");
@@ -735,6 +760,23 @@ textarea { resize: vertical; min-height: 90px; }
   /* ---------------------------- Reminders tab ---------------------------- */
   function renderRemindersTab() {
     if (!state.patients.length) return `<div class="empty-state">No beds loaded yet.</div>`;
+    const allTodos = state.patients.flatMap(p => p.todos);
+    const completed = allTodos.filter(t => t.checked).length;
+    const total = allTodos.length;
+    const pct = total ? Math.round((completed / total) * 100) : 0;
+    const openOf = pr => allTodos.filter(t => !t.checked && t.priority === pr).length;
+
+    const summary = `
+      <div class="reminders-summary">
+        <div class="summary-row"><span>Tasks completed today</span><span>${completed}/${total}</span></div>
+        <div class="progress-bar-track"><div class="progress-fill" style="width:${pct}%; background:var(--accent);"></div></div>
+        <div class="priority-summary-row">
+          <span class="priority-chip high">${openOf("high")} High</span>
+          <span class="priority-chip medium">${openOf("medium")} Medium</span>
+          <span class="priority-chip low">${openOf("low")} Low</span>
+        </div>
+      </div>`;
+
     const list = [...state.patients].sort((a, b) => a.room.localeCompare(b.room, undefined, { numeric: true }));
     const cards = list.map(p => `
       <div class="reminder-card">
@@ -745,7 +787,7 @@ textarea { resize: vertical; min-height: 90px; }
         ${p.problem ? `<div style="font-size:12px; color:var(--text-secondary); margin-bottom:6px;">${escapeHtml(p.problem)}</div>` : ""}
         ${renderTodoList(p)}
       </div>`).join("");
-    return `<div class="list">${cards}</div>`;
+    return summary + `<div class="list">${cards}</div>`;
   }
 
   /* ---------------------------- Dispo tab ---------------------------- */
@@ -893,39 +935,41 @@ textarea { resize: vertical; min-height: 90px; }
     `;
   }
 
-  /* ---------------------------- Dictation ---------------------------- */
-  let recognizer = null;
-  let recognizerPid = null;
-  function toggleDictation(pid, btn) {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) { toast("Dictation isn't supported in this browser. Type your note instead."); return; }
-    const textarea = document.querySelector(`textarea[data-role="notes-textarea"][data-pid="${pid}"]`);
-    if (recognizer) {
-      recognizer.stop(); recognizer = null; recognizerPid = null;
-      btn.classList.remove("recording");
-      return;
-    }
-    recognizer = new SpeechRecognition();
-    recognizerPid = pid;
-    recognizer.continuous = true;
-    recognizer.interimResults = false;
-    recognizer.lang = "en-US";
-    let baseText = textarea.value;
-    recognizer.onresult = (event) => {
-      let finalText = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) finalText += event.results[i][0].transcript;
-      }
-      if (finalText) {
-        baseText = (baseText + " " + finalText).trim();
-        textarea.value = baseText;
-        handlePatientMutation(pid, p => { p.notesText = baseText; }, true);
-      }
-    };
-    recognizer.onerror = () => { btn.classList.remove("recording"); recognizer = null; recognizerPid = null; };
-    recognizer.onend = () => { btn.classList.remove("recording"); recognizer = null; recognizerPid = null; };
-    recognizer.start();
-    btn.classList.add("recording");
+  /* ---------------------------- Add to-do modal ---------------------------- */
+  function openAddTodoModal(pid) {
+    const overlay = createOverlay(false);
+    const sheet = overlay.querySelector(".sheet");
+    sheet.dataset.priority = "";
+    sheet.dataset.pid = pid;
+    sheet.innerHTML = `
+      <div class="sheet-handle"></div>
+      <h2>Add to-do / reminder</h2>
+      <div class="priority-picker">
+        <button type="button" class="priority-opt high" data-action="pick-priority" data-priority="high">High</button>
+        <button type="button" class="priority-opt medium" data-action="pick-priority" data-priority="medium">Medium</button>
+        <button type="button" class="priority-opt low" data-action="pick-priority" data-priority="low">Low</button>
+      </div>
+      <input type="text" id="todo-text-input" placeholder="To-Do/Reminder" style="margin-top:10px;" />
+      <div class="sheet-actions">
+        <button class="btn-secondary" data-action="close-overlay">Cancel</button>
+        <button class="btn-primary" data-action="submit-todo">Add</button>
+      </div>
+    `;
+    setTimeout(() => { const el = document.getElementById("todo-text-input"); if (el) el.focus(); }, 50);
+  }
+
+  /* ---------------------------- Bed options (delete / clear) ---------------------------- */
+  function openBedOptionsSheet(pid) {
+    const p = state.patients.find(x => x.id === pid);
+    if (!p) return;
+    const overlay = createOverlay(false);
+    overlay.querySelector(".sheet").innerHTML = `
+      <div class="sheet-handle"></div>
+      <h2>Room ${escapeHtml(p.room)}</h2>
+      <button class="menu-item" data-action="clear-bed" data-pid="${pid}" style="color:var(--info-text);">${icon("sunrise")} Clear <span class="hint">reset for a new patient</span></button>
+      <button class="menu-item danger" data-action="delete-bed" data-pid="${pid}">${icon("trash")} Delete <span class="hint">remove this bed</span></button>
+      <div class="sheet-actions"><button class="btn-secondary" data-action="close-overlay">Cancel</button></div>
+    `;
   }
 
   /* ---------------------------- Changelog modal ---------------------------- */
@@ -957,10 +1001,7 @@ textarea { resize: vertical; min-height: 90px; }
     document.body.appendChild(overlay);
     return overlay;
   }
-  function closeOverlay(el) {
-    if (recognizer) { recognizer.stop(); recognizer = null; recognizerPid = null; }
-    el.remove();
-  }
+  function closeOverlay(el) { el.remove(); }
 
   function escapeHtml(str) {
     return String(str || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -1080,9 +1121,26 @@ textarea { resize: vertical; min-height: 90px; }
         break;
       }
 
-      case "add-todo": {
-        const text = prompt("To-Do/Reminder");
-        if (text) handlePatientMutation(pid, p => { p.todos.push({ id: uid(), text, checked: false, createdAt: Date.now() }); p._expanded = true; });
+      case "add-todo":
+        openAddTodoModal(pid);
+        break;
+
+      case "pick-priority": {
+        const sheet = target.closest(".sheet");
+        sheet.dataset.priority = target.dataset.priority;
+        sheet.querySelectorAll(".priority-opt").forEach(b => b.classList.remove("selected"));
+        target.classList.add("selected");
+        break;
+      }
+      case "submit-todo": {
+        const sheet = target.closest(".sheet");
+        const todoPid = sheet.dataset.pid;
+        const input = document.getElementById("todo-text-input");
+        const text = input.value.trim();
+        if (!text) { toast("Enter a to-do first"); break; }
+        const priority = sheet.dataset.priority || null;
+        handlePatientMutation(todoPid, p => { p.todos.push({ id: uid(), text, checked: false, priority, createdAt: Date.now() }); p._expanded = true; });
+        closeOverlay(target.closest(".overlay"));
         break;
       }
       case "edit-todo": {
@@ -1112,12 +1170,30 @@ textarea { resize: vertical; min-height: 90px; }
         break;
       }
 
-      case "dictate": toggleDictation(pid, target); break;
+      case "open-bed-options":
+        openBedOptionsSheet(pid);
+        break;
 
-      case "remove-patient": {
-        if (confirm("Remove this bed from your list?")) {
-          state.patients = state.patients.filter(p => p.id !== pid);
-          saveState(); render();
+      case "delete-bed": {
+        const p = state.patients.find(x => x.id === pid);
+        if (p && confirm(`Delete Room ${p.room}? This permanently removes this bed from your list.`)) {
+          state.patients = state.patients.filter(x => x.id !== pid);
+          saveState();
+          closeOverlay(target.closest(".overlay"));
+          render();
+        }
+        break;
+      }
+      case "clear-bed": {
+        const p = state.patients.find(x => x.id === pid);
+        if (p && confirm(`Clear Room ${p.room} for a new patient? This resets rounding status, to-dos, notes, the timer, and all dispo info for this bed.`)) {
+          const fresh = newPatient(p.room);
+          fresh.id = p.id;
+          Object.assign(p, fresh);
+          saveState();
+          closeOverlay(target.closest(".overlay"));
+          render();
+          toast(`Room ${p.room} cleared`);
         }
         break;
       }
@@ -1219,9 +1295,15 @@ textarea { resize: vertical; min-height: 90px; }
     }
   });
 
+  function autoResizeTextarea(el) {
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
+  }
+
   document.addEventListener("input", (e) => {
     if (e.target.dataset && e.target.dataset.role === "notes-textarea") {
       const pid = e.target.dataset.pid;
+      autoResizeTextarea(e.target);
       handlePatientMutation(pid, p => { p.notesText = e.target.value; }, true);
     }
   });

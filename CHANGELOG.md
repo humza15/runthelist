@@ -2,6 +2,20 @@
 
 All notable changes to Rounding List are documented here. Dates reflect when a version was deployed.
 
+## 0.3.0 — 2026-07-25
+### What's new
+- Notes now auto-expand to fit their content instead of scrolling in a fixed box
+- Removed the in-app dictate button — use your iPhone keyboard's built-in dictation instead (tap the mic on the keyboard itself)
+- The trash icon now opens a Delete vs. Clear choice, each requiring confirmation:
+  - **Delete** permanently removes the bed from your list
+  - **Clear** resets everything for that bed (rounding/note status, to-dos, notes, timer, dispo info) so it's ready for a new patient in that room
+- Dispo tab retitled to "Disposition Overview & Discharge Planning"
+- Reminders tab now shows a "Tasks completed today" counter with a progress bar, plus a High/Medium/Low open-task breakdown
+- Adding a to-do now opens a small modal with High/Medium/Low priority buttons instead of a plain text prompt — priority shows as a colored dot next to the task
+
+### Why 0.3.0 and not a patch release
+This batch adds a new data field (task priority) and two new interaction patterns (the priority-picker modal and the Delete/Clear bed reset flow) rather than just refining existing visuals, so it's a minor version bump rather than a 0.2.x patch.
+
 ## 0.2.1 — 2026-07-25
 ### What's new
 - Animated status icon on the Dispo tab, to the left of each patient: sleeping (not ready), jumping (EDD is today), waiting with bags (pending) — shows a dash until an EDD is set
