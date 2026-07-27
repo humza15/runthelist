@@ -2,6 +2,22 @@
 
 All notable changes to Rounding List are documented here. Dates reflect when a version was deployed.
 
+## 0.4.0 — 2026-07-26
+### What's new
+- Added NEW and APP patient tags, toggled from the edit-problem screen (small colored chips next to the room number)
+- Hold the timer button to reset it back to 00:00 (with a confirmation); New Day now also resets all timers automatically
+- Editing a to-do/reminder now opens a proper edit screen with priority selection, not just a text prompt
+- Fixed the Consult auto-cascade — typing "Consult X" now immediately shows both "Consult called?" and "Recs followed?" checkboxes, without needing to check anything first
+- Fixed a scroll-jump bug where the screen would jump after adding or editing a to-do/reminder
+- "Discharge Pending" is now a running list you can add multiple items to, instead of a single flag + reason
+- Opening a card now automatically collapses any other open card — no more juggling a dozen expanded cards at once (applies to both Rounds and Dispo tabs)
+- M.O.I.S.T. discharge checklist checkboxes now align at a consistent height regardless of label length, with a cleaner bold-first-letter style ("**M**eds" instead of a big "M" over "Meds")
+- Reminders tab priority chips (High/Medium/Low) are now clickable filters showing only open tasks of that priority
+- Added a small "Dispo" button on each Rounds card that jumps straight to that patient's entry on the Dispo tab
+
+### Why 0.4.0
+Several items here add new data (patient tags, multi-item pending list) and new interaction patterns (long-press, accordion behavior, cross-tab jump, filterable chips) beyond what a patch release typically covers, consistent with the same reasoning used for 0.3.0.
+
 ## 0.3.0 — 2026-07-25
 ### What's new
 - Notes now auto-expand to fit their content instead of scrolling in a fixed box

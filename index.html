@@ -126,6 +126,14 @@ button { font-family: inherit; cursor: pointer; }
 .card-face { padding: 12px 12px 10px; }
 .card-top-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .room-label { font-size: 18px; font-weight: 700; }
+.patient-tag { font-size: 10px; font-weight: 800; padding: 3px 6px; border-radius: 6px; letter-spacing: 0.02em; }
+.patient-tag.new { background: var(--danger-bg); color: var(--danger-text); }
+.patient-tag.app { background: var(--info-bg); color: var(--info-text); }
+.dispo-jump-btn {
+  font-size: 11px; padding: 5px 9px; border-radius: 20px; background: var(--surface-2);
+  border: 1px solid var(--border); color: var(--text-secondary); display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+}
+.dispo-jump-btn svg { width: 12px; height: 12px; }
 .problem-banner {
   font-size: 14px; font-weight: 600; color: var(--danger-text); background: var(--danger-bg);
   border-radius: 9px; padding: 7px 10px; margin-top: 6px; display: block;
@@ -243,15 +251,16 @@ textarea { resize: vertical; min-height: 90px; }
 .date-preview { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
 .date-preview strong { color: var(--text); }
 
-.moist-row { display: flex; gap: 6px; margin-top: 6px; }
+.moist-row { display: flex; gap: 6px; margin-top: 6px; align-items: stretch; }
 .moist-chip {
-  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
-  padding: 8px 2px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface-2);
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 6px;
+  min-height: 60px; padding: 8px 3px 9px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface-2);
 }
 .moist-chip.on { background: var(--success-bg); border-color: var(--success); }
-.moist-chip .letter { font-size: 16px; font-weight: 700; }
-.moist-chip .label { font-size: 9px; color: var(--text-secondary); text-align: center; line-height: 1.2; }
-.moist-chip input { width: 15px; height: 15px; }
+.moist-chip .label-line { font-size: 11px; font-weight: 500; color: var(--text-secondary); text-align: center; line-height: 1.25; }
+.moist-chip.on .label-line { color: var(--success-text); }
+.moist-chip .big-letter { font-size: 15px; font-weight: 800; }
+.moist-chip input { width: 15px; height: 15px; margin-top: auto; }
 
 .pending-reason { font-size: 12px; color: var(--warn-text); margin-top: 6px; }
 
@@ -319,6 +328,10 @@ textarea { resize: vertical; min-height: 90px; }
 .priority-opt.selected.medium { background: var(--warn-bg); border-color: var(--warn); color: var(--warn-text); }
 .priority-opt.selected.low { background: var(--success-bg); border-color: var(--success); color: var(--success-text); }
 
+.tag-opt { flex: 1; padding: 10px 4px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface-2); font-size: 13px; font-weight: 700; text-align: center; color: var(--text-secondary); }
+.tag-opt.new.selected { background: var(--danger-bg); border-color: var(--danger); color: var(--danger-text); }
+.tag-opt.app.selected { background: var(--info-bg); border-color: var(--info); color: var(--info-text); }
+
 .todo-priority-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 .todo-priority-dot.high { background: var(--danger); }
 .todo-priority-dot.medium { background: var(--warn); }
@@ -328,10 +341,11 @@ textarea { resize: vertical; min-height: 90px; }
 .reminders-summary { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px; margin: 0 16px 12px; }
 .summary-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
 .priority-summary-row { display: flex; gap: 8px; margin-top: 10px; }
-.priority-chip { flex: 1; text-align: center; font-size: 12px; font-weight: 700; padding: 6px 4px; border-radius: 10px; }
+.priority-chip { flex: 1; text-align: center; font-size: 12px; font-weight: 700; padding: 6px 4px; border-radius: 10px; border: 1.5px solid transparent; cursor: pointer; }
 .priority-chip.high { background: var(--danger-bg); color: var(--danger-text); }
 .priority-chip.medium { background: var(--warn-bg); color: var(--warn-text); }
 .priority-chip.low { background: var(--success-bg); color: var(--success-text); }
+.priority-chip.active { border-color: currentColor; }
 
 /* Reminders tab */
 .reminder-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
@@ -401,7 +415,7 @@ textarea { resize: vertical; min-height: 90px; }
   /* ---------------------------- Dispo status icon (person, animated) ---------------------------- */
   function renderStatusIcon(p) {
     if (!p.edd.date) return `<div class="dispo-status-icon">&ndash;</div>`;
-    if (p.pending.active) {
+    if (p.pending.items.length > 0) {
       return `<div class="dispo-status-icon waiting" aria-label="Waiting on something">
         <svg viewBox="0 0 24 24" fill="currentColor">
           <circle cx="10" cy="5" r="3"/>
@@ -488,7 +502,7 @@ textarea { resize: vertical; min-height: 90px; }
     return {
       week: { active: false, unitName: "", startDate: null, dayIndex: 1 },
       patients: [],
-      ui: { tab: "rounds", screen: "splash", sortMode: "room", dispoSortMode: "room" }
+      ui: { tab: "rounds", screen: "splash", sortMode: "room", dispoSortMode: "room", expandedRoundsId: null, expandedDispoId: null, remindersFilter: null }
     };
   }
 
@@ -510,12 +524,18 @@ textarea { resize: vertical; min-height: 90px; }
   function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
   function migratePatient(p) {
+    let pending = p.pending || { items: [] };
+    if (pending.items === undefined) {
+      // migrate from old { active, reason } shape
+      pending = pending.active ? { items: [{ id: uid(), text: pending.reason || "Pending" }] } : { items: [] };
+    }
     return Object.assign(newPatient(p.room), p, {
       todos: p.todos || [],
       dispo: p.dispo || [],
       edd: p.edd || { option: null, date: null },
       ptot: p.ptot || { rec: "", dateRecommended: null },
-      pending: p.pending || { active: false, reason: "" },
+      pending,
+      tags: p.tags || { new: false, app: false },
       moist: p.moist || { med: false, order: false, instructions: false, summary: false, time: false }
     });
   }
@@ -533,16 +553,16 @@ textarea { resize: vertical; min-height: 90px; }
   function newPatient(room) {
     return {
       id: uid(), room, problem: "",
+      tags: { new: false, app: false },
       roundedAt: null, noteAt: null,
       todos: [],
       dispo: [],
       edd: { option: null, date: null },
       ptot: { rec: "", dateRecommended: null },
-      pending: { active: false, reason: "" },
+      pending: { items: [] },
       moist: { med: false, order: false, instructions: false, summary: false, time: false },
       notesText: "",
-      timerSessions: [], timerRunningStart: null,
-      _expanded: false, _dispoExpanded: false
+      timerSessions: [], timerRunningStart: null
     };
   }
 
@@ -564,6 +584,7 @@ textarea { resize: vertical; min-height: 90px; }
 
   /* ---------------------------- Render: root ---------------------------- */
   function render() {
+    const scrollY = window.scrollY;
     const app = document.getElementById("app");
     if (state.ui.screen === "splash") {
       app.innerHTML = renderSplash();
@@ -574,7 +595,17 @@ textarea { resize: vertical; min-height: 90px; }
     } else {
       app.innerHTML = renderHeader() + renderProgress() + renderRoundsList() + versionFooter() + renderTabbar();
       document.querySelectorAll('textarea[data-role="notes-textarea"]').forEach(autoResizeTextarea);
+      attachLongPress();
     }
+    window.scrollTo(0, scrollY);
+  }
+
+  function preserveScroll(fn) {
+    const y = window.scrollY;
+    fn();
+    window.scrollTo(0, y);
+    setTimeout(() => window.scrollTo(0, y), 60);
+    setTimeout(() => window.scrollTo(0, y), 350);
   }
 
   /* ---------------------------- Splash / launch screen ---------------------------- */
@@ -697,13 +728,17 @@ textarea { resize: vertical; min-height: 90px; }
     const openTodos = p.todos.filter(t => !t.checked).length;
     const running = !!p.timerRunningStart;
     const totalSeconds = timerTotalSeconds(p) + (running ? (Date.now() - p.timerRunningStart) / 1000 : 0);
+    const expanded = state.ui.expandedRoundsId === p.id;
+    const tagChips = `${p.tags.new ? '<span class="patient-tag new">NEW</span>' : ""}${p.tags.app ? '<span class="patient-tag app">APP</span>' : ""}`;
 
     return `
     <div class="card ${done ? "done" : ""}" data-pid="${p.id}">
       <div class="card-face" data-action="toggle-expand" data-pid="${p.id}">
         <div class="card-top-row">
-          <span class="room-label">Room ${escapeHtml(p.room)}</span>
-          <span class="chev">${icon(p._expanded ? "chevUp" : "chevDown")}</span>
+          <span class="room-label">Room ${escapeHtml(p.room)}</span>${tagChips}
+          <span style="flex:1;"></span>
+          <button class="dispo-jump-btn" data-action="jump-to-dispo" data-pid="${p.id}">${icon("door")} Dispo</button>
+          <span class="chev">${icon(expanded ? "chevUp" : "chevDown")}</span>
         </div>
         ${p.problem
           ? `<span class="problem-banner" data-action="edit-problem" data-pid="${p.id}">${escapeHtml(p.problem)}</span>`
@@ -717,14 +752,14 @@ textarea { resize: vertical; min-height: 90px; }
 
         <div class="face-bottom-row">
           <span class="todo-summary-chip">${icon("list")} ${openTodos} open to-do${openTodos === 1 ? "" : "s"}</span>
-          <div class="timer-mini">
+          <div class="timer-mini" data-role="timer-holder" data-pid="${p.id}">
             <span class="timer-mini-display" data-role="timer-display" data-pid="${p.id}">${fmtClock(totalSeconds)}</span>
-            <button class="timer-mini-btn ${running ? "running" : ""}" data-action="toggle-timer" data-pid="${p.id}" aria-label="Start or stop timer">${icon(running ? "pause" : "play")}</button>
+            <button class="timer-mini-btn ${running ? "running" : ""}" data-action="toggle-timer" data-pid="${p.id}" data-role="timer-btn" aria-label="Start or stop timer. Hold to reset.">${icon(running ? "pause" : "play")}</button>
           </div>
         </div>
       </div>
 
-      <div class="expand-panel ${p._expanded ? "open" : ""}">
+      <div class="expand-panel ${expanded ? "open" : ""}">
         <div class="expand-inner">
           <div class="expand-section">
             <div class="expand-label">To-dos &amp; reminders</div>
@@ -743,9 +778,11 @@ textarea { resize: vertical; min-height: 90px; }
     </div>`;
   }
 
-  function renderTodoList(p) {
-    if (!p.todos.length) return `<div style="font-size:13px; color:var(--text-muted);">Nothing yet</div>`;
-    return p.todos.map(t => `
+  function renderTodoList(p, filterPriority) {
+    let todos = p.todos;
+    if (filterPriority) todos = todos.filter(t => !t.checked && t.priority === filterPriority);
+    if (!todos.length) return `<div style="font-size:13px; color:var(--text-muted);">${filterPriority ? "None" : "Nothing yet"}</div>`;
+    return todos.map(t => `
       <div class="todo-item ${t.checked ? "checked" : ""}">
         ${t.priority ? `<span class="todo-priority-dot ${t.priority}"></span>` : ""}
         <input type="checkbox" data-action="toggle-todo" data-pid="${p.id}" data-tid="${t.id}" ${t.checked ? "checked" : ""}/>
@@ -765,19 +802,25 @@ textarea { resize: vertical; min-height: 90px; }
     const total = allTodos.length;
     const pct = total ? Math.round((completed / total) * 100) : 0;
     const openOf = pr => allTodos.filter(t => !t.checked && t.priority === pr).length;
+    const filter = state.ui.remindersFilter;
+
+    const chip = (pr, label) => `<span class="priority-chip ${pr} ${filter === pr ? "active" : ""}" data-action="filter-priority" data-priority="${pr}">${openOf(pr)} ${label}</span>`;
 
     const summary = `
       <div class="reminders-summary">
         <div class="summary-row"><span>Tasks completed today</span><span>${completed}/${total}</span></div>
         <div class="progress-bar-track"><div class="progress-fill" style="width:${pct}%; background:var(--accent);"></div></div>
         <div class="priority-summary-row">
-          <span class="priority-chip high">${openOf("high")} High</span>
-          <span class="priority-chip medium">${openOf("medium")} Medium</span>
-          <span class="priority-chip low">${openOf("low")} Low</span>
+          ${chip("high", "High")}
+          ${chip("medium", "Medium")}
+          ${chip("low", "Low")}
         </div>
+        ${filter ? `<div style="text-align:center; margin-top:8px;"><button data-action="filter-priority" data-priority="${filter}" style="background:none;border:none;color:var(--text-muted);font-size:11px;text-decoration:underline;">Clear filter</button></div>` : ""}
       </div>`;
 
-    const list = [...state.patients].sort((a, b) => a.room.localeCompare(b.room, undefined, { numeric: true }));
+    let list = [...state.patients].sort((a, b) => a.room.localeCompare(b.room, undefined, { numeric: true }));
+    if (filter) list = list.filter(p => p.todos.some(t => !t.checked && t.priority === filter));
+
     const cards = list.map(p => `
       <div class="reminder-card">
         <div class="reminder-card-head">
@@ -785,9 +828,9 @@ textarea { resize: vertical; min-height: 90px; }
           <button class="icon-btn" style="width:30px;height:30px;" data-action="add-todo" data-pid="${p.id}">${icon("plus")}</button>
         </div>
         ${p.problem ? `<div style="font-size:12px; color:var(--text-secondary); margin-bottom:6px;">${escapeHtml(p.problem)}</div>` : ""}
-        ${renderTodoList(p)}
+        ${renderTodoList(p, filter)}
       </div>`).join("");
-    return summary + `<div class="list">${cards}</div>`;
+    return summary + (cards ? `<div class="list">${cards}</div>` : `<div class="empty-state">No open ${filter} priority tasks.</div>`);
   }
 
   /* ---------------------------- Dispo tab ---------------------------- */
@@ -812,39 +855,58 @@ textarea { resize: vertical; min-height: 90px; }
     const label = eddLabel(p.edd.date);
     const badgeClass = eddBadgeClass(p.edd.date);
     const isTodayOrOverdue = p.edd.date && diffDays(p.edd.date) <= 0;
-    const dispoItems = p.dispo.map(d => `
-      <div class="dispo-item ${d.checked ? "checked" : ""}">
-        <input type="checkbox" data-action="toggle-dispo" data-pid="${p.id}" data-did="${d.id}" ${d.checked ? "checked" : ""}/>
-        <span data-action="edit-dispo" data-pid="${p.id}" data-did="${d.id}">${escapeHtml(d.text)}</span>
+    const expanded = state.ui.expandedDispoId === p.id;
+    const isPending = p.pending.items.length > 0;
+
+    const dispoItems = p.dispo.map(d => {
+      if (d.isConsult) {
+        return `
+      <div class="dispo-item">
+        <span data-action="edit-dispo" data-pid="${p.id}" data-did="${d.id}" style="font-weight:600;">${escapeHtml(d.text)}</span>
       </div>
-      ${d.isConsult && d.checked ? `
+      <div class="dispo-subitem">
+        <input type="checkbox" data-action="toggle-consult-called" data-pid="${p.id}" data-did="${d.id}" ${d.calledChecked ? "checked" : ""}/>
+        <span>Consult called?</span>
+      </div>
       <div class="dispo-subitem">
         <input type="checkbox" data-action="toggle-recs" data-pid="${p.id}" data-did="${d.id}" ${d.recsChecked ? "checked" : ""}/>
         <span>Recs followed?</span>
-      </div>` : ""}
-    `).join("");
+      </div>`;
+      }
+      return `
+      <div class="dispo-item ${d.checked ? "checked" : ""}">
+        <input type="checkbox" data-action="toggle-dispo" data-pid="${p.id}" data-did="${d.id}" ${d.checked ? "checked" : ""}/>
+        <span data-action="edit-dispo" data-pid="${p.id}" data-did="${d.id}">${escapeHtml(d.text)}</span>
+      </div>`;
+    }).join("");
+
+    const pendingItems = p.pending.items.map(it => `
+      <div class="dispo-item">
+        <span style="flex:1;">${escapeHtml(it.text)}</span>
+        <button class="icon-only-btn" style="padding:2px;" data-action="remove-pending-item" data-pid="${p.id}" data-iid="${it.id}" aria-label="Remove">${icon("x")}</button>
+      </div>`).join("");
 
     return `
-    <div class="dispo-card ${p.pending.active ? "pending" : ""}">
+    <div class="dispo-card ${isPending ? "pending" : ""}" data-pid="${p.id}">
       <div class="dispo-face" data-action="toggle-dispo-expand" data-pid="${p.id}">
         <div class="dispo-face-row">
           ${renderStatusIcon(p)}
           <div class="dispo-face-main">
             <div class="dispo-top-row">
               <span class="room-label">Room ${escapeHtml(p.room)}</span>
-              <span class="chev">${icon(p._dispoExpanded ? "chevUp" : "chevDown")}</span>
+              <span class="chev">${icon(expanded ? "chevUp" : "chevDown")}</span>
             </div>
             ${p.problem ? `<div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">${escapeHtml(p.problem)}</div>` : ""}
             <div class="dispo-badges">
               <span class="badge ${badgeClass}">EDD: ${label}</span>
               ${p.ptot.rec ? `<span class="badge later">${escapeHtml(p.ptot.rec)}</span>` : ""}
-              ${p.pending.active ? `<span class="badge pending">Pending${p.pending.reason ? ": " + escapeHtml(p.pending.reason) : ""}</span>` : ""}
+              ${isPending ? `<span class="badge pending">Discharge Pending (${p.pending.items.length})</span>` : ""}
             </div>
           </div>
         </div>
       </div>
 
-      <div class="expand-panel ${p._dispoExpanded ? "open" : ""}">
+      <div class="expand-panel ${expanded ? "open" : ""}">
         <div class="expand-inner">
 
           <div class="field-row">
@@ -865,11 +927,11 @@ textarea { resize: vertical; min-height: 90px; }
           <div class="field-row">
             <label>Discharge checklist &mdash; M.O.I.S.T.</label>
             <div class="moist-row">
-              ${moistChip(p, "med", "M", "Meds")}
-              ${moistChip(p, "order", "O", "Order")}
-              ${moistChip(p, "instructions", "I", "Instr.")}
-              ${moistChip(p, "summary", "S", "Summary")}
-              ${moistChip(p, "time", "T", "Time")}
+              ${moistChip(p, "med", "Meds")}
+              ${moistChip(p, "order", "Order")}
+              ${moistChip(p, "instructions", "Instr.")}
+              ${moistChip(p, "summary", "Summary")}
+              ${moistChip(p, "time", "Time")}
             </div>
           </div>` : ""}
 
@@ -882,11 +944,9 @@ textarea { resize: vertical; min-height: 90px; }
           </div>
 
           <div class="field-row">
-            <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-weight:600; font-size:13px;">
-              <input type="checkbox" style="width:17px;height:17px;" data-action="toggle-pending" data-pid="${p.id}" ${p.pending.active ? "checked" : ""}/>
-              Awaiting something (pending discharge)
-            </label>
-            ${p.pending.active && p.pending.reason ? `<div class="pending-reason">${escapeHtml(p.pending.reason)}</div>` : ""}
+            <label>Discharge pending</label>
+            ${pendingItems || '<div style="font-size:12px; color:var(--text-muted);">Nothing pending</div>'}
+            <button class="dispo-add" data-action="add-pending-item" data-pid="${p.id}">${icon("plus")} Add pending item</button>
           </div>
 
           <div class="field-row">
@@ -900,12 +960,11 @@ textarea { resize: vertical; min-height: 90px; }
     </div>`;
   }
 
-  function moistChip(p, key, letter, label) {
+  function moistChip(p, key, word) {
     const on = p.moist[key];
     return `
       <label class="moist-chip ${on ? "on" : ""}">
-        <span class="letter">${letter}</span>
-        <span class="label">${label}</span>
+        <span class="label-line"><span class="big-letter">${word[0]}</span>${word.slice(1)}</span>
         <input type="checkbox" data-action="toggle-moist" data-pid="${p.id}" data-key="${key}" ${on ? "checked" : ""}/>
       </label>`;
   }
@@ -935,7 +994,30 @@ textarea { resize: vertical; min-height: 90px; }
     `;
   }
 
-  /* ---------------------------- Add to-do modal ---------------------------- */
+  /* ---------------------------- Edit problem modal ---------------------------- */
+  function openEditProblemModal(pid) {
+    const p = state.patients.find(x => x.id === pid);
+    if (!p) return;
+    const overlay = createOverlay(false);
+    const sheet = overlay.querySelector(".sheet");
+    sheet.dataset.pid = pid;
+    sheet.innerHTML = `
+      <div class="sheet-handle"></div>
+      <h2>Primary problem</h2>
+      <div class="priority-picker">
+        <button type="button" class="tag-opt new ${p.tags.new ? "selected" : ""}" data-action="toggle-tag" data-pid="${pid}" data-tag="new">NEW</button>
+        <button type="button" class="tag-opt app ${p.tags.app ? "selected" : ""}" data-action="toggle-tag" data-pid="${pid}" data-tag="app">APP</button>
+      </div>
+      <input type="text" id="problem-text-input" placeholder="Primary problem / one-liner" style="margin-top:10px;" value="${escapeHtml(p.problem)}" />
+      <div class="sheet-actions">
+        <button class="btn-secondary" data-action="close-overlay">Cancel</button>
+        <button class="btn-primary" data-action="submit-problem">Save</button>
+      </div>
+    `;
+    setTimeout(() => { const el = document.getElementById("problem-text-input"); if (el) el.focus(); }, 50);
+  }
+
+  /* ---------------------------- Add / edit to-do modal ---------------------------- */
   function openAddTodoModal(pid) {
     const overlay = createOverlay(false);
     const sheet = overlay.querySelector(".sheet");
@@ -953,6 +1035,32 @@ textarea { resize: vertical; min-height: 90px; }
       <div class="sheet-actions">
         <button class="btn-secondary" data-action="close-overlay">Cancel</button>
         <button class="btn-primary" data-action="submit-todo">Add</button>
+      </div>
+    `;
+    setTimeout(() => { const el = document.getElementById("todo-text-input"); if (el) el.focus(); }, 50);
+  }
+
+  function openEditTodoModal(pid, tid) {
+    const p = state.patients.find(x => x.id === pid);
+    const item = p && p.todos.find(t => t.id === tid);
+    if (!item) return;
+    const overlay = createOverlay(false);
+    const sheet = overlay.querySelector(".sheet");
+    sheet.dataset.priority = item.priority || "";
+    sheet.dataset.pid = pid;
+    sheet.dataset.tid = tid;
+    sheet.innerHTML = `
+      <div class="sheet-handle"></div>
+      <h2>Edit to-do / reminder</h2>
+      <div class="priority-picker">
+        <button type="button" class="priority-opt high ${item.priority === "high" ? "selected" : ""}" data-action="pick-priority" data-priority="high">High</button>
+        <button type="button" class="priority-opt medium ${item.priority === "medium" ? "selected" : ""}" data-action="pick-priority" data-priority="medium">Medium</button>
+        <button type="button" class="priority-opt low ${item.priority === "low" ? "selected" : ""}" data-action="pick-priority" data-priority="low">Low</button>
+      </div>
+      <input type="text" id="todo-text-input" style="margin-top:10px;" value="${escapeHtml(item.text)}" />
+      <div class="sheet-actions">
+        <button class="btn-secondary" data-action="delete-todo">Delete</button>
+        <button class="btn-primary" data-action="save-todo-edit">Save</button>
       </div>
     `;
     setTimeout(() => { const el = document.getElementById("todo-text-input"); if (el) el.focus(); }, 50);
@@ -1001,7 +1109,10 @@ textarea { resize: vertical; min-height: 90px; }
     document.body.appendChild(overlay);
     return overlay;
   }
-  function closeOverlay(el) { el.remove(); }
+  function closeOverlay(el) {
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    el.remove();
+  }
 
   function escapeHtml(str) {
     return String(str || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -1067,10 +1178,10 @@ textarea { resize: vertical; min-height: 90px; }
       case "close-overlay": closeOverlay(target.closest(".overlay")); break;
 
       case "new-day":
-        state.patients.forEach(p => { p.roundedAt = null; p.noteAt = null; });
+        state.patients.forEach(p => { p.roundedAt = null; p.noteAt = null; p.timerSessions = []; p.timerRunningStart = null; });
         state.week.dayIndex += 1;
         saveState(); closeOverlay(target.closest(".overlay")); render();
-        toast("New day started \u2014 daily checks cleared");
+        toast("New day started \u2014 daily checks and timers reset");
         break;
 
       case "end-week":
@@ -1103,21 +1214,34 @@ textarea { resize: vertical; min-height: 90px; }
         handlePatientMutation(pid, p => { p.noteAt = p.noteAt ? null : Date.now(); });
         break;
 
-      case "toggle-expand": {
-        const p = state.patients.find(x => x.id === pid);
-        if (p) { p._expanded = !p._expanded; render(); }
+      case "toggle-expand":
+        state.ui.expandedRoundsId = state.ui.expandedRoundsId === pid ? null : pid;
+        saveState(); render();
         break;
-      }
-      case "toggle-dispo-expand": {
-        const p = state.patients.find(x => x.id === pid);
-        if (p) { p._dispoExpanded = !p._dispoExpanded; render(); }
+      case "toggle-dispo-expand":
+        state.ui.expandedDispoId = state.ui.expandedDispoId === pid ? null : pid;
+        saveState(); render();
         break;
-      }
 
-      case "edit-problem": {
+      case "edit-problem":
+        openEditProblemModal(pid);
+        break;
+      case "toggle-tag": {
+        const tag = target.dataset.tag;
         const p = state.patients.find(x => x.id === pid);
-        const val = prompt("Primary problem / one-liner:", p ? p.problem : "");
-        if (val !== null) handlePatientMutation(pid, p => { p.problem = val.trim(); });
+        if (!p) break;
+        p.tags[tag] = !p.tags[tag];
+        saveState();
+        target.classList.toggle("selected");
+        break;
+      }
+      case "submit-problem": {
+        const sheet = target.closest(".sheet");
+        const problemPid = sheet.dataset.pid;
+        const val = document.getElementById("problem-text-input").value.trim();
+        handlePatientMutation(problemPid, p => { p.problem = val; }, true);
+        closeOverlay(target.closest(".overlay"));
+        render();
         break;
       }
 
@@ -1139,17 +1263,45 @@ textarea { resize: vertical; min-height: 90px; }
         const text = input.value.trim();
         if (!text) { toast("Enter a to-do first"); break; }
         const priority = sheet.dataset.priority || null;
-        handlePatientMutation(todoPid, p => { p.todos.push({ id: uid(), text, checked: false, priority, createdAt: Date.now() }); p._expanded = true; });
-        closeOverlay(target.closest(".overlay"));
+        preserveScroll(() => {
+          handlePatientMutation(todoPid, p => { p.todos.push({ id: uid(), text, checked: false, priority, createdAt: Date.now() }); }, true);
+          closeOverlay(target.closest(".overlay"));
+          state.ui.expandedRoundsId = todoPid;
+          render();
+        });
         break;
       }
       case "edit-todo": {
         const tid = target.dataset.tid;
-        const p = state.patients.find(x => x.id === pid);
-        const item = p && p.todos.find(t => t.id === tid);
-        if (!item) break;
-        const val = prompt("Edit item:", item.text);
-        if (val !== null) handlePatientMutation(pid, p => { p.todos.find(t => t.id === tid).text = val.trim(); });
+        openEditTodoModal(pid, tid);
+        break;
+      }
+      case "save-todo-edit": {
+        const sheet = target.closest(".sheet");
+        const todoPid = sheet.dataset.pid;
+        const tid = sheet.dataset.tid;
+        const val = document.getElementById("todo-text-input").value.trim();
+        if (!val) { toast("To-do can't be empty"); break; }
+        const priority = sheet.dataset.priority || null;
+        preserveScroll(() => {
+          handlePatientMutation(todoPid, p => {
+            const t = p.todos.find(x => x.id === tid);
+            t.text = val; t.priority = priority;
+          }, true);
+          closeOverlay(target.closest(".overlay"));
+          render();
+        });
+        break;
+      }
+      case "delete-todo": {
+        const sheet = target.closest(".sheet");
+        const todoPid = sheet.dataset.pid;
+        const tid = sheet.dataset.tid;
+        preserveScroll(() => {
+          handlePatientMutation(todoPid, p => { p.todos = p.todos.filter(t => t.id !== tid); }, true);
+          closeOverlay(target.closest(".overlay"));
+          render();
+        });
         break;
       }
       case "toggle-todo": {
@@ -1167,6 +1319,16 @@ textarea { resize: vertical; min-height: 90px; }
             p.timerRunningStart = Date.now();
           }
         });
+        break;
+      }
+
+      case "jump-to-dispo": {
+        state.ui.tab = "dispo";
+        state.ui.expandedDispoId = pid;
+        saveState();
+        render();
+        const el = document.querySelector(`.dispo-card[data-pid="${pid}"]`);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
         break;
       }
 
@@ -1202,12 +1364,20 @@ textarea { resize: vertical; min-height: 90px; }
 
       case "toggle-dispo": {
         const did = target.dataset.did;
-        handlePatientMutation(pid, p => { const it = p.dispo.find(d => d.id === did); it.checked = !it.checked; p._dispoExpanded = true; });
+        handlePatientMutation(pid, p => { const it = p.dispo.find(d => d.id === did); it.checked = !it.checked; });
+        state.ui.expandedDispoId = pid; saveState();
+        break;
+      }
+      case "toggle-consult-called": {
+        const did = target.dataset.did;
+        handlePatientMutation(pid, p => { const it = p.dispo.find(d => d.id === did); it.calledChecked = !it.calledChecked; });
+        state.ui.expandedDispoId = pid; saveState();
         break;
       }
       case "toggle-recs": {
         const did = target.dataset.did;
-        handlePatientMutation(pid, p => { const it = p.dispo.find(d => d.id === did); it.recsChecked = !it.recsChecked; p._dispoExpanded = true; });
+        handlePatientMutation(pid, p => { const it = p.dispo.find(d => d.id === did); it.recsChecked = !it.recsChecked; });
+        state.ui.expandedDispoId = pid; saveState();
         break;
       }
       case "edit-dispo": {
@@ -1218,45 +1388,59 @@ textarea { resize: vertical; min-height: 90px; }
         const val = prompt("Edit item:", item.text);
         if (val !== null) handlePatientMutation(pid, p => {
           const it = p.dispo.find(d => d.id === did);
-          it.text = val.trim(); it.isConsult = /consult/i.test(val); p._dispoExpanded = true;
+          it.text = val.trim(); it.isConsult = /consult/i.test(val);
         });
+        state.ui.expandedDispoId = pid; saveState();
         break;
       }
       case "add-dispo": {
         const text = prompt("Dispo item (e.g. needs Cardiology follow up):");
         if (text) {
           const isConsult = /consult/i.test(text);
-          handlePatientMutation(pid, p => { p.dispo.push({ id: uid(), text, checked: false, isConsult, recsChecked: false }); p._dispoExpanded = true; });
+          handlePatientMutation(pid, p => { p.dispo.push({ id: uid(), text, checked: false, isConsult, calledChecked: false, recsChecked: false }); });
+          state.ui.expandedDispoId = pid; saveState();
         }
         break;
       }
 
       case "toggle-moist": {
         const key = target.dataset.key;
-        handlePatientMutation(pid, p => { p.moist[key] = !p.moist[key]; p._dispoExpanded = true; });
+        handlePatientMutation(pid, p => { p.moist[key] = !p.moist[key]; });
+        state.ui.expandedDispoId = pid; saveState();
         break;
       }
 
-      case "toggle-pending": {
-        const p = state.patients.find(x => x.id === pid);
-        if (!p) break;
-        if (!p.pending.active) {
-          const reason = prompt("What are you waiting on? (e.g. awaiting CT results)") || "";
-          handlePatientMutation(pid, p => { p.pending = { active: true, reason: reason.trim() }; p._dispoExpanded = true; });
-        } else {
-          handlePatientMutation(pid, p => { p.pending = { active: false, reason: "" }; p._dispoExpanded = true; });
+      case "add-pending-item": {
+        const text = prompt("What are you waiting on? (e.g. awaiting CT results)");
+        if (text) {
+          handlePatientMutation(pid, p => { p.pending.items.push({ id: uid(), text: text.trim() }); });
+          state.ui.expandedDispoId = pid; saveState();
         }
+        break;
+      }
+      case "remove-pending-item": {
+        const iid = target.dataset.iid;
+        handlePatientMutation(pid, p => { p.pending.items = p.pending.items.filter(it => it.id !== iid); });
+        state.ui.expandedDispoId = pid; saveState();
         break;
       }
 
       case "share-summary": {
         const lines = state.patients.map(p => {
-          const pending = p.todos.filter(t => !t.checked).map(t => `  - ${t.text}`).join("\n");
-          return `Room ${p.room}${p.edd.date ? " (EDD " + eddLabel(p.edd.date) + ")" : ""}${p.pending.active ? " \u2014 PENDING: " + p.pending.reason : ""}\n${pending || "  - no open to-dos"}`;
+          const openTodos = p.todos.filter(t => !t.checked).map(t => `  - ${t.text}`).join("\n");
+          const pendingLines = p.pending.items.map(it => `  - PENDING: ${it.text}`).join("\n");
+          return `Room ${p.room}${p.edd.date ? " (EDD " + eddLabel(p.edd.date) + ")" : ""}\n${[openTodos, pendingLines].filter(Boolean).join("\n") || "  - no open items"}`;
         }).join("\n\n");
         const text = `Sign-out summary \u2014 ${state.week.unitName || "Rounding list"}\n\n${lines}`;
         if (navigator.share) navigator.share({ text }).catch(() => {});
         else if (navigator.clipboard) { navigator.clipboard.writeText(text); toast("Summary copied to clipboard"); }
+        break;
+      }
+
+      case "filter-priority": {
+        const pr = target.dataset.priority;
+        state.ui.remindersFilter = state.ui.remindersFilter === pr ? null : pr;
+        saveState(); render();
         break;
       }
     }
@@ -1276,13 +1460,14 @@ textarea { resize: vertical; min-height: 90px; }
         else if (val === "3-5") date = addDaysISO(todayISO(), 3);
         else if (val === "custom") date = p.edd.date || todayISO();
         p.edd = { option: val || null, date };
-        p._dispoExpanded = true;
       });
+      state.ui.expandedDispoId = pid; saveState();
     }
     if (e.target.dataset.action === "set-edd-custom") {
       const pid = e.target.dataset.pid;
       const val = e.target.value;
-      handlePatientMutation(pid, p => { p.edd.date = val; p._dispoExpanded = true; });
+      handlePatientMutation(pid, p => { p.edd.date = val; });
+      state.ui.expandedDispoId = pid; saveState();
     }
     if (e.target.dataset.action === "set-ptot") {
       const pid = e.target.dataset.pid;
@@ -1290,14 +1475,48 @@ textarea { resize: vertical; min-height: 90px; }
       handlePatientMutation(pid, p => {
         p.ptot.rec = val;
         p.ptot.dateRecommended = val ? todayISO() : null;
-        p._dispoExpanded = true;
       });
+      state.ui.expandedDispoId = pid; saveState();
     }
   });
 
   function autoResizeTextarea(el) {
     el.style.height = "auto";
     el.style.height = el.scrollHeight + "px";
+  }
+
+  function attachLongPress() {
+    document.querySelectorAll('[data-role="timer-btn"]').forEach(btn => {
+      let pressTimer = null;
+      let longPressed = false;
+      const pid = btn.dataset.pid;
+
+      const start = () => {
+        longPressed = false;
+        pressTimer = setTimeout(() => {
+          longPressed = true;
+          if (navigator.vibrate) navigator.vibrate(30);
+          if (confirm("Reset this patient's timer back to 00:00?")) {
+            handlePatientMutation(pid, p => { p.timerSessions = []; p.timerRunningStart = null; });
+            toast("Timer reset");
+          }
+        }, 600);
+      };
+      const cancel = () => { clearTimeout(pressTimer); };
+
+      btn.addEventListener("touchstart", start, { passive: true });
+      btn.addEventListener("touchend", cancel);
+      btn.addEventListener("touchmove", cancel);
+      btn.addEventListener("touchcancel", cancel);
+      btn.addEventListener("mousedown", start);
+      btn.addEventListener("mouseup", cancel);
+      btn.addEventListener("mouseleave", cancel);
+
+      // Suppress the click (start/stop) that would otherwise fire right after a long-press reset
+      btn.addEventListener("click", (e) => {
+        if (longPressed) { e.stopPropagation(); e.preventDefault(); longPressed = false; }
+      }, true);
+    });
   }
 
   document.addEventListener("input", (e) => {

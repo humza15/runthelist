@@ -1,12 +1,16 @@
 {
-  "version": "0.3.0",
-  "releaseDate": "2026-07-25",
+  "version": "0.4.0",
+  "releaseDate": "2026-07-26",
   "notes": [
-    "Notes now auto-expand to fit their content instead of scrolling",
-    "Removed the in-app dictate button - use your iPhone keyboard's built-in dictation instead",
-    "The trash icon now opens a Delete vs Clear choice, each with a confirmation - Delete removes the bed, Clear resets it (rounding status, to-dos, notes, timer, dispo) for a new patient",
-    "Dispo tab retitled to Disposition Overview & Discharge Planning",
-    "Reminders tab now shows a tasks-completed-today counter plus a High/Medium/Low breakdown",
-    "Adding a to-do now opens a small modal with High/Medium/Low priority buttons instead of a plain text prompt"
+    "Added NEW and APP patient tags, toggled from the edit-problem screen",
+    "Hold the timer button to reset it; New Day now also resets all timers automatically",
+    "Editing a to-do/reminder now lets you change its priority, not just the text",
+    "Fixed the Consult auto-cascade: typing Consult now immediately shows Consult called? and Recs followed? checkboxes",
+    "Fixed a scroll-jump bug that occurred after adding or editing a to-do/reminder",
+    "Discharge Pending is now a running list of multiple items instead of a single reason",
+    "Opening a card now automatically collapses any other open card, on both Rounds and Dispo tabs",
+    "M.O.I.S.T. discharge checklist checkboxes now align consistently regardless of label length, with a cleaner bold-first-letter style",
+    "Reminders tab priority chips are now clickable filters",
+    "Added a Dispo jump button on each Rounds card to open that patient's Dispo entry directly"
   ]
 }
