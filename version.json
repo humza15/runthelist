@@ -1,12 +1,7 @@
 {
-  "version": "0.4.1",
+  "version": "0.4.3",
   "releaseDate": "2026-07-26",
   "notes": [
-    "Fixed the NEW/APP tag buttons rendering full-screen size instead of small pills",
-    "New Day now also clears completed (checked-off) Rounds tasks to prevent buildup over the week",
-    "Fixed the Estimated Discharge Date dropdown not updating itself as days pass - it now always reflects the actual resolved date",
-    "Discharge Pending items now have their own checkbox",
-    "Added a green card highlight for Ready (EDD = Today), matching the existing orange highlight",
-    "The orange waiting icon/card now triggers only when EDD = Tomorrow, no longer tied to pending items"
+    "Fixed the APP tag still rendering as a giant full-screen element - it shared a CSS class name with the app's own root container, which forced a min-height:100vh onto it. Renamed the class to remove the collision; APP now matches NEW as a small pill both in the edit-problem screen and on the card."
   ]
 }

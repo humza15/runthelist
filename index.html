@@ -128,7 +128,7 @@ button { font-family: inherit; cursor: pointer; }
 .room-label { font-size: 18px; font-weight: 700; }
 .patient-tag { font-size: 10px; font-weight: 800; padding: 3px 6px; border-radius: 6px; letter-spacing: 0.02em; }
 .patient-tag.new { background: var(--danger-bg); color: var(--danger-text); }
-.patient-tag.app { background: var(--info-bg); color: var(--info-text); }
+.patient-tag.tag-app { background: var(--info-bg); color: var(--info-text); }
 .dispo-jump-btn {
   font-size: 11px; padding: 5px 9px; border-radius: 20px; background: var(--surface-2);
   border: 1px solid var(--border); color: var(--text-secondary); display: flex; align-items: center; gap: 4px; flex-shrink: 0;
@@ -235,8 +235,8 @@ textarea { resize: vertical; min-height: 90px; }
 
 /* Dispo tab */
 .dispo-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
-.dispo-card.waiting { border-color: var(--warn); background: var(--warn-bg); }
-.dispo-card.ready { border-color: var(--success); background: var(--success-bg); }
+.dispo-card.waiting { border: 2px solid var(--warn); }
+.dispo-card.ready { border: 2px solid var(--success); }
 .dispo-face { padding: 12px; }
 .dispo-top-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .dispo-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
@@ -332,7 +332,7 @@ textarea { resize: vertical; min-height: 90px; }
 
 .tag-opt { flex: 1; padding: 10px 4px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface-2); font-size: 13px; font-weight: 700; text-align: center; color: var(--text-secondary); }
 .tag-opt.new.selected { background: var(--danger-bg); border-color: var(--danger); color: var(--danger-text); }
-.tag-opt.app.selected { background: var(--info-bg); border-color: var(--info); color: var(--info-text); }
+.tag-opt.tag-app.selected { background: var(--info-bg); border-color: var(--info); color: var(--info-text); }
 
 .todo-priority-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 .todo-priority-dot.high { background: var(--danger); }
@@ -742,7 +742,7 @@ textarea { resize: vertical; min-height: 90px; }
     const running = !!p.timerRunningStart;
     const totalSeconds = timerTotalSeconds(p) + (running ? (Date.now() - p.timerRunningStart) / 1000 : 0);
     const expanded = state.ui.expandedRoundsId === p.id;
-    const tagChips = `${p.tags.new ? '<span class="patient-tag new">NEW</span>' : ""}${p.tags.app ? '<span class="patient-tag app">APP</span>' : ""}`;
+    const tagChips = `${p.tags.new ? '<span class="patient-tag new">NEW</span>' : ""}${p.tags.app ? '<span class="patient-tag tag-app">APP</span>' : ""}`;
 
     return `
     <div class="card ${done ? "done" : ""}" data-pid="${p.id}">
@@ -1028,7 +1028,7 @@ textarea { resize: vertical; min-height: 90px; }
       <h2>Primary problem</h2>
       <div class="priority-picker">
         <button type="button" class="tag-opt new ${p.tags.new ? "selected" : ""}" data-action="toggle-tag" data-pid="${pid}" data-tag="new">NEW</button>
-        <button type="button" class="tag-opt app ${p.tags.app ? "selected" : ""}" data-action="toggle-tag" data-pid="${pid}" data-tag="app">APP</button>
+        <button type="button" class="tag-opt tag-app ${p.tags.app ? "selected" : ""}" data-action="toggle-tag" data-pid="${pid}" data-tag="app">APP</button>
       </div>
       <input type="text" id="problem-text-input" placeholder="Primary problem / one-liner" style="margin-top:10px;" value="${escapeHtml(p.problem)}" />
       <div class="sheet-actions">

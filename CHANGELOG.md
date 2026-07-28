@@ -2,6 +2,14 @@
 
 All notable changes to Rounding List are documented here. Dates reflect when a version was deployed.
 
+## 0.4.3 — 2026-07-26
+### Bug fix
+- Fixed the APP tag button/chip still rendering full-screen size after the 0.4.2 fix. Root cause: it shared the literal CSS class name "app" with the app's own root container element, which carries min-height: 100vh. Since CSS class selectors match by name regardless of intent, the tag inherited that height. Renamed the tag's class to "tag-app" to remove the collision — APP now matches NEW as a small pill everywhere.
+
+## 0.4.2 — 2026-07-26
+### Bug fix
+- Fixed dispo card coloring from 0.4.1 — the ready (green) and waiting (orange) states now color only the card's outline, as intended, instead of filling the entire card background and making the text unreadable
+
 ## 0.4.1 — 2026-07-26
 ### Bug fixes
 - Fixed the NEW/APP tag buttons in the edit-problem screen rendering at full-screen size instead of small pills (a flexbox stretch bug)
