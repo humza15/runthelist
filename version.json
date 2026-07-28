@@ -1,16 +1,12 @@
 {
-  "version": "0.4.0",
+  "version": "0.4.1",
   "releaseDate": "2026-07-26",
   "notes": [
-    "Added NEW and APP patient tags, toggled from the edit-problem screen",
-    "Hold the timer button to reset it; New Day now also resets all timers automatically",
-    "Editing a to-do/reminder now lets you change its priority, not just the text",
-    "Fixed the Consult auto-cascade: typing Consult now immediately shows Consult called? and Recs followed? checkboxes",
-    "Fixed a scroll-jump bug that occurred after adding or editing a to-do/reminder",
-    "Discharge Pending is now a running list of multiple items instead of a single reason",
-    "Opening a card now automatically collapses any other open card, on both Rounds and Dispo tabs",
-    "M.O.I.S.T. discharge checklist checkboxes now align consistently regardless of label length, with a cleaner bold-first-letter style",
-    "Reminders tab priority chips are now clickable filters",
-    "Added a Dispo jump button on each Rounds card to open that patient's Dispo entry directly"
+    "Fixed the NEW/APP tag buttons rendering full-screen size instead of small pills",
+    "New Day now also clears completed (checked-off) Rounds tasks to prevent buildup over the week",
+    "Fixed the Estimated Discharge Date dropdown not updating itself as days pass - it now always reflects the actual resolved date",
+    "Discharge Pending items now have their own checkbox",
+    "Added a green card highlight for Ready (EDD = Today), matching the existing orange highlight",
+    "The orange waiting icon/card now triggers only when EDD = Tomorrow, no longer tied to pending items"
   ]
 }

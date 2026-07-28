@@ -2,6 +2,15 @@
 
 All notable changes to Rounding List are documented here. Dates reflect when a version was deployed.
 
+## 0.4.1 — 2026-07-26
+### Bug fixes
+- Fixed the NEW/APP tag buttons in the edit-problem screen rendering at full-screen size instead of small pills (a flexbox stretch bug)
+- New Day now also clears completed (checked-off) Rounds tasks, so the list doesn't get cluttered with old finished to-dos over a multi-day week
+- Fixed the Estimated Discharge Date dropdown getting "stuck" on the originally-picked option (e.g. staying on "Tomorrow" even after that date becomes today) — it now always reflects the actual resolved date on every load
+- Discharge Pending items now have their own checkbox to mark resolved, in addition to the remove button
+- Added a green card highlight for the Ready state (EDD = Today), matching the existing orange highlight style
+- The orange "waiting" icon/card color now triggers only when EDD = Tomorrow specifically — Discharge Pending items no longer affect the status icon
+
 ## 0.4.0 — 2026-07-26
 ### What's new
 - Added NEW and APP patient tags, toggled from the edit-problem screen (small colored chips next to the room number)

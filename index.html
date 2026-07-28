@@ -235,7 +235,8 @@ textarea { resize: vertical; min-height: 90px; }
 
 /* Dispo tab */
 .dispo-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
-.dispo-card.pending { border-color: var(--warn); }
+.dispo-card.waiting { border-color: var(--warn); background: var(--warn-bg); }
+.dispo-card.ready { border-color: var(--success); background: var(--success-bg); }
 .dispo-face { padding: 12px; }
 .dispo-top-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .dispo-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
@@ -319,7 +320,8 @@ textarea { resize: vertical; min-height: 90px; }
 .share-link svg { width: 14px; height: 14px; }
 
 /* Priority picker (add to-do modal) */
-.priority-picker { display: flex; gap: 8px; margin-top: 4px; }
+.priority-picker { display: flex; align-items: stretch; gap: 8px; margin-top: 4px; height: auto; }
+.priority-opt, .tag-opt { align-self: auto; max-height: 44px; }
 .priority-opt {
   flex: 1; padding: 10px 4px; border-radius: 10px; border: 1.5px solid var(--border);
   background: var(--surface-2); font-size: 13px; font-weight: 700; text-align: center; color: var(--text-secondary);
@@ -415,18 +417,8 @@ textarea { resize: vertical; min-height: 90px; }
   /* ---------------------------- Dispo status icon (person, animated) ---------------------------- */
   function renderStatusIcon(p) {
     if (!p.edd.date) return `<div class="dispo-status-icon">&ndash;</div>`;
-    if (p.pending.items.length > 0) {
-      return `<div class="dispo-status-icon waiting" aria-label="Waiting on something">
-        <svg viewBox="0 0 24 24" fill="currentColor">
-          <circle cx="10" cy="5" r="3"/>
-          <rect x="7" y="9" width="6" height="7" rx="1"/>
-          <rect x="14" y="12" width="5" height="6" rx="1"/>
-          <rect class="foot" x="7" y="16" width="3" height="5"/>
-          <rect x="11" y="16" width="3" height="5"/>
-        </svg>
-      </div>`;
-    }
-    if (diffDays(p.edd.date) <= 0) {
+    const diff = diffDays(p.edd.date);
+    if (diff <= 0) {
       return `<div class="dispo-status-icon ready" aria-label="Ready for discharge">
         <svg viewBox="0 0 24 24" fill="currentColor">
           <circle cx="12" cy="5" r="3"/>
@@ -435,6 +427,17 @@ textarea { resize: vertical; min-height: 90px; }
           <rect x="16" y="8" width="4" height="2" transform="rotate(20 18 9)"/>
           <rect x="8" y="18" width="3" height="4"/>
           <rect x="13" y="18" width="3" height="4"/>
+        </svg>
+      </div>`;
+    }
+    if (diff === 1) {
+      return `<div class="dispo-status-icon waiting" aria-label="Discharge planned for tomorrow">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="10" cy="5" r="3"/>
+          <rect x="7" y="9" width="6" height="7" rx="1"/>
+          <rect x="14" y="12" width="5" height="6" rx="1"/>
+          <rect class="foot" x="7" y="16" width="3" height="5"/>
+          <rect x="11" y="16" width="3" height="5"/>
         </svg>
       </div>`;
     }
@@ -493,6 +496,16 @@ textarea { resize: vertical; min-height: 90px; }
     if (diff <= 0) return "today";
     if (diff <= 3) return "soon";
     return "later";
+  }
+  function resolvedEddOption(edd) {
+    if (!edd.date) return "";
+    if (edd.option === "custom") return "custom";
+    const diff = diffDays(edd.date);
+    if (diff <= 0) return "today";
+    if (diff === 1) return "tomorrow";
+    if (diff <= 3) return "2-3";
+    if (diff <= 5) return "3-5";
+    return "custom";
   }
 
   /* ---------------------------- State ---------------------------- */
@@ -857,6 +870,14 @@ textarea { resize: vertical; min-height: 90px; }
     const isTodayOrOverdue = p.edd.date && diffDays(p.edd.date) <= 0;
     const expanded = state.ui.expandedDispoId === p.id;
     const isPending = p.pending.items.length > 0;
+    const currentEddOption = resolvedEddOption(p.edd);
+
+    let cardState = "";
+    if (p.edd.date) {
+      const diff = diffDays(p.edd.date);
+      if (diff <= 0) cardState = "ready";
+      else if (diff === 1) cardState = "waiting";
+    }
 
     const dispoItems = p.dispo.map(d => {
       if (d.isConsult) {
@@ -881,13 +902,14 @@ textarea { resize: vertical; min-height: 90px; }
     }).join("");
 
     const pendingItems = p.pending.items.map(it => `
-      <div class="dispo-item">
+      <div class="dispo-item ${it.checked ? "checked" : ""}">
+        <input type="checkbox" data-action="toggle-pending-item" data-pid="${p.id}" data-iid="${it.id}" ${it.checked ? "checked" : ""}/>
         <span style="flex:1;">${escapeHtml(it.text)}</span>
         <button class="icon-only-btn" style="padding:2px;" data-action="remove-pending-item" data-pid="${p.id}" data-iid="${it.id}" aria-label="Remove">${icon("x")}</button>
       </div>`).join("");
 
     return `
-    <div class="dispo-card ${isPending ? "pending" : ""}" data-pid="${p.id}">
+    <div class="dispo-card ${cardState}" data-pid="${p.id}">
       <div class="dispo-face" data-action="toggle-dispo-expand" data-pid="${p.id}">
         <div class="dispo-face-row">
           ${renderStatusIcon(p)}
@@ -913,13 +935,13 @@ textarea { resize: vertical; min-height: 90px; }
             <label>Estimated discharge date</label>
             <select data-action="set-edd-option" data-pid="${p.id}">
               <option value="">Not set</option>
-              <option value="today" ${p.edd.option === "today" ? "selected" : ""}>Today</option>
-              <option value="tomorrow" ${p.edd.option === "tomorrow" ? "selected" : ""}>Tomorrow</option>
-              <option value="2-3" ${p.edd.option === "2-3" ? "selected" : ""}>2&ndash;3 days</option>
-              <option value="3-5" ${p.edd.option === "3-5" ? "selected" : ""}>3&ndash;5 days</option>
-              <option value="custom" ${p.edd.option === "custom" ? "selected" : ""}>Pick a date&hellip;</option>
+              <option value="today" ${currentEddOption === "today" ? "selected" : ""}>Today</option>
+              <option value="tomorrow" ${currentEddOption === "tomorrow" ? "selected" : ""}>Tomorrow</option>
+              <option value="2-3" ${currentEddOption === "2-3" ? "selected" : ""}>2&ndash;3 days</option>
+              <option value="3-5" ${currentEddOption === "3-5" ? "selected" : ""}>3&ndash;5 days</option>
+              <option value="custom" ${currentEddOption === "custom" ? "selected" : ""}>Pick a date&hellip;</option>
             </select>
-            ${p.edd.option === "custom" ? `<input type="date" style="margin-top:6px;" data-action="set-edd-custom" data-pid="${p.id}" value="${p.edd.date || ""}" />` : ""}
+            ${currentEddOption === "custom" && p.edd.date ? `<input type="date" style="margin-top:6px;" data-action="set-edd-custom" data-pid="${p.id}" value="${p.edd.date || ""}" />` : ""}
             ${p.edd.date ? `<div class="date-preview">Resolves to <strong>${prettyDate(p.edd.date)}</strong> &middot; ${label}</div>` : ""}
           </div>
 
@@ -1178,10 +1200,13 @@ textarea { resize: vertical; min-height: 90px; }
       case "close-overlay": closeOverlay(target.closest(".overlay")); break;
 
       case "new-day":
-        state.patients.forEach(p => { p.roundedAt = null; p.noteAt = null; p.timerSessions = []; p.timerRunningStart = null; });
+        state.patients.forEach(p => {
+          p.roundedAt = null; p.noteAt = null; p.timerSessions = []; p.timerRunningStart = null;
+          p.todos = p.todos.filter(t => !t.checked);
+        });
         state.week.dayIndex += 1;
         saveState(); closeOverlay(target.closest(".overlay")); render();
-        toast("New day started \u2014 daily checks and timers reset");
+        toast("New day started \u2014 daily checks, timers, and completed tasks cleared");
         break;
 
       case "end-week":
@@ -1416,6 +1441,12 @@ textarea { resize: vertical; min-height: 90px; }
           handlePatientMutation(pid, p => { p.pending.items.push({ id: uid(), text: text.trim() }); });
           state.ui.expandedDispoId = pid; saveState();
         }
+        break;
+      }
+      case "toggle-pending-item": {
+        const iid = target.dataset.iid;
+        handlePatientMutation(pid, p => { const it = p.pending.items.find(x => x.id === iid); it.checked = !it.checked; });
+        state.ui.expandedDispoId = pid; saveState();
         break;
       }
       case "remove-pending-item": {
